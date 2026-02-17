@@ -1,12 +1,11 @@
 import mongoose from "mongoose";
-
 const { Schema, model } = mongoose;
 
 const courseSchema = new Schema(
   {
     title: {
       type: String,
-      required: true,
+      required: [true, "Course title is required"],
     },
     creditHours: {
       type: Number,
@@ -16,7 +15,10 @@ const courseSchema = new Schema(
     teacher: {
       type: Schema.Types.ObjectId,
       ref: "Teacher",
-      required: true,
+    },
+    department: {
+      type: Schema.Types.ObjectId,
+      ref: "Department",
     },
     students: [
       {

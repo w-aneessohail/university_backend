@@ -1,15 +1,16 @@
 import mongoose from "mongoose";
-
 const { Schema, model } = mongoose;
 
 const teacherSchema = new Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, "Teacher name is required"],
     },
     department: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "Department",
+      required: true,
     },
     teachesCourses: [
       {
