@@ -2,6 +2,7 @@ import express from "express";
 import studentRoutes from "./routes/student.routes.js";
 import departmentRoutes from "./routes/department.routes.js";
 import teacherRoutes from "./routes/teacher.routes.js";
+import courseRoutes from "./routes/course.routes.js";
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(express.json());
 app.use("/api/students", studentRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/teachers", teacherRoutes);
+app.use("/api/courses", courseRoutes);
 
 // app.get("/", (req, res) => {
 //   res.send("Hello Boss Connected");
