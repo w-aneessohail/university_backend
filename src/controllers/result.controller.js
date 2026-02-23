@@ -1,6 +1,7 @@
 import Result from "../models/Result.js";
 import Enrollment from "../models/Enrollment.js";
 import Assessment from "../models/Assessment.js";
+import mongoose from "mongoose";
 
 export const createResult = async (req, res) => {
   try {
@@ -107,6 +108,95 @@ export const deleteResult = async (req, res) => {
         .json({ success: false, message: "Result not found" });
 
     res.json({ success: true, message: "Result deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getResultReport = async (req, res) => {
+  try {
+    let pipeline = [];
+
+    pipeline.push({
+      $lookup: {
+        from: "enrollments",
+        localField: "enrollment",
+        foreignField: "_id",
+        as: "enrollment",
+      },
+    });
+
+    pipeline.push({ $unwind: "$enrollment" });
+
+    pipeline.push({
+      $lookup: {
+        from: "students",
+        localField: "enrollment.student",
+        foreignField: "_id",
+        as: "student",
+      },
+    });
+
+    pipeline.push({ $unwind: "$student" });
+
+    pipeline.push({
+      $lookup: {
+        from: "courses",
+        localField: "enrollment.course",
+        foreignField: "_id",
+        as: "course",
+      },
+    });
+
+    pipeline.push({ $unwind: "$course" });
+
+    pipeline.push({
+      $lookup: {
+        from: "assessments",
+        localField: "assessment",
+        foreignField: "_id",
+        as: "assessment",
+      },
+    });
+
+    pipeline.push({ $unwind: "$assessment" });
+
+    let matchStage = {};
+
+    if (req.query.courseId) {
+      matchStage["course._id"] = new mongoose.Types.ObjectId(
+        req.query.courseId,
+      );
+    }
+
+    if (req.query.minMarks) {
+      matchStage["marksObtained"] = { $gte: Number(req.query.minMarks) };
+    }
+
+    if (req.query.studentName) {
+      matchStage["student.name"] = {
+        $regex: req.query.studentName,
+        $options: "i",
+      };
+    }
+
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    pipeline.push({
+      $project: {
+        _id: 0,
+        studentName: "$student.name",
+        courseTitle: "$course.title",
+        assessmentTitle: "$assessment.title",
+        marksObtained: 1,
+      },
+    });
+
+    const results = await Result.aggregate(pipeline);
+
+    res.json({ success: true, count: results.length, data: results });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
